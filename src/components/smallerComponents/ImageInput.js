@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
-import { initializeApp } from "firebase/app";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import FirebaseConfig from "../../utilities/FirebaseConfig";
+import { uploadBytes, getDownloadURL } from "firebase/storage";
 
 function ImageInput(props, reference) {
   const [error, setError] = useState(false);
@@ -10,29 +10,15 @@ function ImageInput(props, reference) {
 
   //check if empty
   if (props.isSubmitClicked && !uploadedFile && avoidLoop) {
+    if (!sessionStorage.getItem("image")) {
+      setError(true);
+    }
     setAvoidLoop(false);
-    setError(true);
   }
-  //initialize firebase
-  let app = null;
-  if (app === null) {
-    app = initializeApp({
-      apiKey: "AIzaSyAuKuGpSebaC1K8e8v9CBAz-NPTj1ECvA0",
-      authDomain: "redberry-resume-maker.firebaseapp.com",
-      projectId: "redberry-resume-maker",
-      storageBucket: "redberry-resume-maker.appspot.com",
-      messagingSenderId: "111384610633",
-      appId: "1:111384610633:web:792c6b69d10e2631757c98",
-      measurementId: "G-BEQNLENT9E",
-    });
-  }
-
-  const storage = getStorage(app);
-  const storageRef = ref(storage, "userProfileImage");
 
   //download image from firebase
   useEffect(() => {
-    getDownloadURL(ref(storage, "userProfileImage"))
+    getDownloadURL(FirebaseConfig())
       .then((url) => {
         console.log("image downloaded from firebase");
         setError(false);
@@ -70,12 +56,13 @@ function ImageInput(props, reference) {
         style={FileStyles.UploaderStyles}
         ref={reference}
         onChange={(e) => {
-          console.log(e.target.files[0]);
           if ("image file on change" + e.target.files[0]) {
-            uploadBytes(storageRef, e.target.files[0]).then((snapshot) => {
-              console.log("Uploaded a blob or file!");
-            });
-            setUploadedFile(e.target.files[0]);
+            uploadBytes(FirebaseConfig(), e.target.files[0]).then(
+              (snapshot) => {
+                console.log("Uploaded a blob or file!");
+                setUploadedFile(e.target.files[0]);
+              }
+            );
             setError(false);
           }
         }}
